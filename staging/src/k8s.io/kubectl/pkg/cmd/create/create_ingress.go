@@ -22,6 +22,8 @@ import (
 	"regexp"
 	"strings"
 
+	"k8s.io/klog/v2"
+
 	"github.com/spf13/cobra"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -62,34 +64,46 @@ var (
 	Create an ingress with the specified name.`))
 
 	ingressExample = templates.Examples(i18n.T(`
+		# Create a catch all ingress with a single rule forwarding from external foo.com/bar to a svc internalbar:8080
+		# with a tls secret "my-cert"
+	
+		kubectl create ingress catch-all --rule="foo.com/bar=internalbar:8080,tls=my-cert"
+
 		# Create a catch all ingress pointing to service svc:port and Ingress Class as "otheringress"
+
 		kubectl create ingress catch-all --class=otheringress --rule="_/=svc:port"
 
 		# Create an ingress with two annotations: ingress.annotation1 and ingress.annotations2
+
 		kubectl create ingress annotated --class=default --rule="foo.com/bar=svc:port" \
 			--annotation ingress.annotation1=foo \
 			--annotation ingress.annotation2=bla
 
 		# Create an ingress with the same host and multiple paths
+
 		kubectl create ingress multipath --class=default \ 
 			--rule="foo.com/=svc:port" \
 			--rule="foo.com/admin/=svcadmin:portadmin"
 
 		# Create an ingress with multiple hosts and the pathType as Prefix
+
 		kubectl create ingress ingress1 --class=default \
 			--rule="foo.com/path*=svc:8080" \
 			--rule="bar.com/admin*=svc2:http"
 
 		# Create an ingress with TLS enabled using the default ingress certificate and different path types
+
 		kubectl create ingress ingtls --class=default \
 		   --rule="foo.com/=svc:https,tls" \
 		   --rule="foo.com/path/subpath*=othersvc:8080"
 		
 		# Create an ingress with TLS enabled using a specific secret and pathType as Prefix
+
 		kubectl create ingress ingsecret --class=default \
 		   --rule="foo.com/*=svc:8080,tls=secret1"
 		
 		# Create an ingress with a default backend
+
 		kubectl create ingress ingdefault --class=default \
 		   --default-backend=defaultsvc:http \
 		   --rule="foo.com/*=svc:8080,tls=secret1"
@@ -130,7 +144,7 @@ func NewCreateIngressOptions(ioStreams genericclioptions.IOStreams) *CreateIngre
 }
 
 // NewCmdCreateIngress is a macro command to create a new ingress.
-// This command is better known to users as `kubectl create ingress`.
+// (i.e. kubectl create ingress)
 func NewCmdCreateIngress(f cmdutil.Factory, ioStreams genericclioptions.IOStreams) *cobra.Command {
 	o := NewCreateIngressOptions(ioStreams)
 
@@ -221,12 +235,16 @@ func (o *CreateIngressOptions) Validate() error {
 
 	for _, rule := range o.Rules {
 		if match := rulevalidation.MatchString(rule); !match {
-			return fmt.Errorf("rule %s is invalid and should be in format host/path=svcname:svcport[,tls[=secret]]", rule)
+			return fmt.Errorf("rule %s is invalid and should be in format host/path=svcname:svcport[,tls[=secret]], i.e. create ingress catch-all --rule=\"a/b=abc\"", rule)
 		}
 	}
 
 	if len(o.DefaultBackend) > 0 && len(strings.Split(o.DefaultBackend, ":")) != 2 {
 		return fmt.Errorf("default-backend should be in format servicename:serviceport")
+	}
+
+	if len(o.DefaultBackend) == 0 && len(o.Rules) == 0 {
+		return fmt.Errorf("not enough information provided: every ingress has to either specify a default-backend (which catches all traffic) or a list of rules (which catch specific paths)")
 	}
 	return nil
 }
@@ -251,6 +269,7 @@ func (o *CreateIngressOptions) Run() error {
 			createOptions.DryRun = []string{metav1.DryRunAll}
 		}
 		var err error
+		klog.Infof("Creating ingress %v in namespace %v", ingress.Name, o.Namespace)
 		ingress, err = o.Client.Ingresses(o.Namespace).Create(context.TODO(), ingress, createOptions)
 		if err != nil {
 			return fmt.Errorf("failed to create ingress: %v", err)
