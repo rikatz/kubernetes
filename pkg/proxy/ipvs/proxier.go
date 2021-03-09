@@ -631,7 +631,6 @@ func (handle *LinuxKernelHandler) GetModules() ([]string, error) {
 		}
 		return bmods, nil
 	}
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read file /proc/modules with error %v", err)
 	}
