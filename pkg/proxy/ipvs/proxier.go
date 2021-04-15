@@ -48,6 +48,7 @@ import (
 	utilipset "k8s.io/component-helpers/networking/utils/ipset"
 	utiliptables "k8s.io/component-helpers/networking/utils/iptables"
 	utilipvs "k8s.io/component-helpers/networking/utils/ipvs"
+	utilsysctl "k8s.io/component-helpers/node/utils/sysctl"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/proxy"
 	"k8s.io/kubernetes/pkg/proxy/healthcheck"
@@ -56,7 +57,6 @@ import (
 	utilproxy "k8s.io/kubernetes/pkg/proxy/util"
 	proxyutiliptables "k8s.io/kubernetes/pkg/proxy/util/iptables"
 	"k8s.io/kubernetes/pkg/util/async"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 )
 
 const (

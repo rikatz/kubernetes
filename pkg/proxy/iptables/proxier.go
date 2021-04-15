@@ -42,6 +42,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/component-helpers/networking/utils/conntrack"
 	utiliptables "k8s.io/component-helpers/networking/utils/iptables"
+	utilsysctl "k8s.io/component-helpers/node/utils/sysctl"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/proxy"
@@ -51,7 +52,6 @@ import (
 	utilproxy "k8s.io/kubernetes/pkg/proxy/util"
 	proxyutiliptables "k8s.io/kubernetes/pkg/proxy/util/iptables"
 	"k8s.io/kubernetes/pkg/util/async"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	utilexec "k8s.io/utils/exec"
 	utilnet "k8s.io/utils/net"
 )

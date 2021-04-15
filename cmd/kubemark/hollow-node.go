@@ -49,7 +49,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	fakeremote "k8s.io/kubernetes/pkg/kubelet/cri/remote/fake"
 	"k8s.io/kubernetes/pkg/kubemark"
-	fakesysctl "k8s.io/kubernetes/pkg/util/sysctl/testing"
+	fakesysctl "k8s.io/component-helpers/node/utils/sysctl/testing"
 	utiltaints "k8s.io/kubernetes/pkg/util/taints"
 	fakeexec "k8s.io/utils/exec/testing"
 )

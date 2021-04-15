@@ -52,6 +52,7 @@ import (
 	utilipset "k8s.io/component-helpers/networking/utils/ipset"
 	utiliptables "k8s.io/component-helpers/networking/utils/iptables"
 	utilipvs "k8s.io/component-helpers/networking/utils/ipvs"
+	utilsysctl "k8s.io/component-helpers/node/utils/sysctl"
 	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/proxy"
 	proxyconfigapi "k8s.io/kubernetes/pkg/proxy/apis/config"
@@ -63,7 +64,6 @@ import (
 	"k8s.io/kubernetes/pkg/proxy/userspace"
 	proxyutiliptables "k8s.io/kubernetes/pkg/proxy/util/iptables"
 	utilnode "k8s.io/kubernetes/pkg/util/node"
-	utilsysctl "k8s.io/kubernetes/pkg/util/sysctl"
 	"k8s.io/utils/exec"
 	utilsnet "k8s.io/utils/net"
 
