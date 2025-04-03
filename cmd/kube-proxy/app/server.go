@@ -25,6 +25,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -571,10 +572,26 @@ func (s *ProxyServer) Run(ctx context.Context) error {
 	// only notify on changes, and the initial update (on process start) may be lost if no handlers
 	// are registered yet.
 	// don't watch headless services for kube-proxy, they are proxied by DNS.
+	optionsInformerList := metav1.ListOptions{
+		LabelSelector: labelSelector.String(),
+		FieldSelector: fields.OneTermNotEqualSelector("spec.clusterIP", v1.ClusterIPNone).String(),
+	}
+
+	// We do an initial list to check if the API Server supports the field selector, otherwise
+	// remove it from the options
+	_, err = s.Client.CoreV1().Services(v1.NamespaceDefault).List(ctx, optionsInformerList)
+	if err != nil {
+		// TODO: Is there an error checker (eg apierrors) for this error?
+		if strings.Contains(err.Error(), "is not a known field selector") {
+			logger.Error(err, "field selector is not available on current apiserver and will be ignored")
+			optionsInformerList.FieldSelector = ""
+		}
+	}
+
 	serviceInformerFactory := informers.NewSharedInformerFactoryWithOptions(s.Client, s.Config.ConfigSyncPeriod.Duration,
 		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-			options.LabelSelector = labelSelector.String()
-			options.FieldSelector = fields.OneTermNotEqualSelector("spec.clusterIP", v1.ClusterIPNone).String()
+			options.LabelSelector = optionsInformerList.LabelSelector
+			options.FieldSelector = optionsInformerList.FieldSelector
 		}))
 	serviceConfig := config.NewServiceConfig(ctx, serviceInformerFactory.Core().V1().Services(), s.Config.ConfigSyncPeriod.Duration)
 	serviceConfig.RegisterEventHandler(s.Proxier)
