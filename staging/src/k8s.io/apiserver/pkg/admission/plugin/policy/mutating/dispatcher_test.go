@@ -18,9 +18,10 @@ package mutating
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/api/admissionregistration/v1beta1"
@@ -685,7 +686,7 @@ func TestDispatcher(t *testing.T) {
 				VersionedOldObject: tc.oldObject,
 			}
 
-			err = dispatcher.Dispatch(ctx, vAttrs, objectInterfaces, tc.policyHooks)
+			err = dispatcher.Dispatch(ctx, vAttrs, objectInterfaces, tc.policyHooks, informerFactory.Core().V1().Namespaces().Lister())
 			if err != nil {
 				t.Fatalf("error dispatching policy hooks: %v", err)
 			}

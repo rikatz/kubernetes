@@ -36,6 +36,7 @@ import (
 	celconfig "k8s.io/apiserver/pkg/apis/cel"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/warning"
+	corev1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 )
 
@@ -69,7 +70,7 @@ func (c *dispatcher) Start(ctx context.Context) error {
 }
 
 // Dispatch implements generic.Dispatcher.
-func (c *dispatcher) Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []PolicyHook) error {
+func (c *dispatcher) Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []PolicyHook, namespacelister corev1.NamespaceLister) error {
 
 	var deniedDecisions []policyDecisionWithMetadata
 
@@ -158,7 +159,7 @@ func (c *dispatcher) Dispatch(ctx context.Context, a admission.Attributes, o adm
 				hook.ParamInformer,
 				hook.ParamScope,
 				binding.Spec.ParamRef,
-				a.GetNamespace(),
+				a.GetNamespace(), namespacelister,
 			)
 
 			if err != nil {

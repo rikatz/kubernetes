@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/api/admissionregistration/v1"
+	v1 "k8s.io/api/admissionregistration/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/admission/plugin/policy/matching"
 	webhookgeneric "k8s.io/apiserver/pkg/admission/plugin/webhook/generic"
 	"k8s.io/client-go/informers"
+	corev1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -107,7 +108,7 @@ func (d *policyDispatcher[P, B, E]) Start(ctx context.Context) error {
 // Note: MatchConditions expressions are not evaluated here. The dispatcher delegate
 // is expected to ignore the result of any policies whose match conditions dont pass.
 // This may be possible to refactor so matchconditions are checked here instead.
-func (d *policyDispatcher[P, B, E]) Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []PolicyHook[P, B, E]) error {
+func (d *policyDispatcher[P, B, E]) Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []PolicyHook[P, B, E], namespacelister corev1.NamespaceLister) error {
 	var relevantHooks []PolicyInvocation[P, B, E]
 	// Construct all the versions we need to call our webhooks
 	versionedAttrAccessor := &versionedAttributeAccessor{
@@ -173,7 +174,7 @@ func (d *policyDispatcher[P, B, E]) Dispatch(ctx context.Context, a admission.At
 				hook.ParamInformer,
 				hook.ParamScope,
 				bindingAccessor.GetParamRef(),
-				a.GetNamespace(),
+				a.GetNamespace(), namespacelister,
 			)
 			if err != nil {
 				// There was an error collecting params for this binding.
@@ -269,7 +270,7 @@ func CollectParams(
 	paramInformer informers.GenericInformer,
 	paramScope meta.RESTScope,
 	paramRef *v1.ParamRef,
-	namespace string,
+	namespace string, namespaceLister corev1.NamespaceLister,
 ) ([]runtime.Object, error) {
 	// If definition has paramKind, paramRef is required in binding.
 	// If definition has no paramKind, paramRef set in binding will be ignored.

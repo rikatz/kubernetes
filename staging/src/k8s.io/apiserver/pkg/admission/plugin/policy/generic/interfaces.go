@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"k8s.io/apiserver/pkg/admission"
+	corev1 "k8s.io/client-go/listers/core/v1"
 )
 
 // Hook represents a dynamic admission hook. The hook may be a webhook or a
@@ -56,7 +57,7 @@ type Dispatcher[H Hook] interface {
 	// call a hook, either because the rules of the hook does not match, or
 	// the namespaceSelector or the objectSelector of the hook does not
 	// match. A non-nil error means the request is rejected.
-	Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []H) error
+	Dispatch(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, hooks []H, namespacelister corev1.NamespaceLister) error
 }
 
 // An evaluator represents a compiled CEL expression that can be evaluated a

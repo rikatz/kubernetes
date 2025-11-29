@@ -210,7 +210,7 @@ func (c *Plugin[H]) Dispatch(
 		return admission.NewForbidden(a, fmt.Errorf("not yet ready to handle request"))
 	}
 
-	return c.dispatcher.Dispatch(ctx, a, o, c.source.Hooks())
+	return c.dispatcher.Dispatch(ctx, a, o, c.source.Hooks(), c.informerFactory.Core().V1().Namespaces().Lister())
 }
 
 func (c *Plugin[H]) shouldIgnoreResource(attr admission.Attributes) bool {
