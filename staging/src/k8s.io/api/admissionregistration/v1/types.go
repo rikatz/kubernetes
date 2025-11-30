@@ -590,6 +590,18 @@ type ParamRef struct {
 	//
 	// Required
 	ParameterNotFoundAction *ParameterNotFoundActionType `json:"parameterNotFoundAction,omitempty" protobuf:"bytes,4,rep,name=parameterNotFoundAction"`
+
+	// namespaceSelector can be used to match multiple param objects on different namespaces.
+	// Supply namespaceSelector: {} to match all resources of the ParamKind on all the namespaces.
+	//
+	// If multiple params are found, they are all evaluated with the policy expressions
+	// and the results are ANDed together.
+	//
+	// `namespaceSelector` is only valid when `selector` is set, and cannot be used when `namespace`
+	// or `name` are also set.
+	//
+	// +optional
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty" protobuf:"bytes,5,rep,name=namespaceSelector"`
 }
 
 // MatchResources decides whether to run the admission control policy on an object based
