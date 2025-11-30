@@ -388,6 +388,10 @@ func CollectParams(
 		// of listing all the resources by simply skipping this list.
 		// Otherwise, we do expect that the params will contain all of the resources from
 		// the cluster, but then we can filter it out before returning
+
+		// TODO: what is faster here? Going over all params and filtering out, or
+		// for every namespace selected create a paramInformer.Lister().ByNamespace(namespace)
+		// and adding them to a final filtered array?
 		if paramRef.NamespaceSelector == nil || len(selectedNS) > 0 {
 			// Select everything by default if empty name and selector
 			selector, err := metav1.LabelSelectorAsSelector(paramRef.Selector)

@@ -62,7 +62,21 @@
           }
         ]
       },
-      "parameterNotFoundAction": "parameterNotFoundActionValue"
+      "parameterNotFoundAction": "parameterNotFoundActionValue",
+      "namespaceSelector": {
+        "matchLabels": {
+          "matchLabelsKey": "matchLabelsValue"
+        },
+        "matchExpressions": [
+          {
+            "key": "keyValue",
+            "operator": "operatorValue",
+            "values": [
+              "valuesValue"
+            ]
+          }
+        ]
+      }
     },
     "matchResources": {
       "namespaceSelector": {

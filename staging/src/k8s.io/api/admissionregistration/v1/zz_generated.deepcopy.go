@@ -305,6 +305,11 @@ func (in *ParamRef) DeepCopyInto(out *ParamRef) {
 		*out = new(ParameterNotFoundActionType)
 		**out = **in
 	}
+	if in.NamespaceSelector != nil {
+		in, out := &in.NamespaceSelector, &out.NamespaceSelector
+		*out = new(metav1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

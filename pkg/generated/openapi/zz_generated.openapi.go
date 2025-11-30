@@ -2129,6 +2129,12 @@ func schema_k8sio_api_admissionregistration_v1_ParamRef(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
+					"namespaceSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "namespaceSelector can be used to match multiple param objects on different namespaces. Supply namespaceSelector: {} to match all resources of the ParamKind on all the namespaces.\n\nIf multiple params are found, they are all evaluated with the policy expressions and the results are ANDed together.\n\n`namespaceSelector` is only valid when `selector` is set, and cannot be used when `namespace` or `name` are also set.",
+							Ref:         ref(metav1.LabelSelector{}.OpenAPIModelName()),
+						},
+					},
 				},
 			},
 			VendorExtensible: spec.VendorExtensible{
@@ -3950,6 +3956,12 @@ func schema_k8sio_api_admissionregistration_v1alpha1_ParamRef(ref common.Referen
 							Enum:        []interface{}{"Allow", "Deny"},
 						},
 					},
+					"namespaceSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "namespaceSelector can be used to match multiple param objects on different namespaces. Supply namespaceSelector: {} to match all resources of the ParamKind on all the namespaces.\n\nIf multiple params are found, they are all evaluated with the policy expressions and the results are ANDed together.\n\n`namespaceSelector` is only valid when `selector` is set, and cannot be used when `namespace` or `name` are also set.",
+							Ref:         ref(metav1.LabelSelector{}.OpenAPIModelName()),
+						},
+					},
 				},
 			},
 			VendorExtensible: spec.VendorExtensible{
@@ -5505,6 +5517,12 @@ func schema_k8sio_api_admissionregistration_v1beta1_ParamRef(ref common.Referenc
 							Description: "`parameterNotFoundAction` controls the behavior of the binding when the resource exists, and name or selector is valid, but there are no parameters matched by the binding. If the value is set to `Allow`, then no matched parameters will be treated as successful validation by the binding. If set to `Deny`, then no matched parameters will be subject to the `failurePolicy` of the policy.\n\nAllowed values are `Allow` or `Deny`\n\nRequired",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"namespaceSelector": {
+						SchemaProps: spec.SchemaProps{
+							Description: "namespaceSelector can be used to match multiple param objects on different namespaces. Supply namespaceSelector: {} to match all resources of the ParamKind on all the namespaces.\n\nIf multiple params are found, they are all evaluated with the policy expressions and the results are ANDed together.\n\n`namespaceSelector` is only valid when `selector` is set, and cannot be used when `namespace` or `name` are also set.",
+							Ref:         ref(metav1.LabelSelector{}.OpenAPIModelName()),
 						},
 					},
 				},

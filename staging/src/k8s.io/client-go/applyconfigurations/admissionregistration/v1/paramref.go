@@ -73,6 +73,15 @@ type ParamRefApplyConfiguration struct {
 	//
 	// Required
 	ParameterNotFoundAction *admissionregistrationv1.ParameterNotFoundActionType `json:"parameterNotFoundAction,omitempty"`
+	// namespaceSelector can be used to match multiple param objects on different namespaces.
+	// Supply namespaceSelector: {} to match all resources of the ParamKind on all the namespaces.
+	//
+	// If multiple params are found, they are all evaluated with the policy expressions
+	// and the results are ANDed together.
+	//
+	// `namespaceSelector` is only valid when `selector` is set, and cannot be used when `namespace`
+	// or `name` are also set.
+	NamespaceSelector *metav1.LabelSelectorApplyConfiguration `json:"namespaceSelector,omitempty"`
 }
 
 // ParamRefApplyConfiguration constructs a declarative configuration of the ParamRef type for use with
@@ -110,5 +119,13 @@ func (b *ParamRefApplyConfiguration) WithSelector(value *metav1.LabelSelectorApp
 // If called multiple times, the ParameterNotFoundAction field is set to the value of the last call.
 func (b *ParamRefApplyConfiguration) WithParameterNotFoundAction(value admissionregistrationv1.ParameterNotFoundActionType) *ParamRefApplyConfiguration {
 	b.ParameterNotFoundAction = &value
+	return b
+}
+
+// WithNamespaceSelector sets the NamespaceSelector field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the NamespaceSelector field is set to the value of the last call.
+func (b *ParamRefApplyConfiguration) WithNamespaceSelector(value *metav1.LabelSelectorApplyConfiguration) *ParamRefApplyConfiguration {
+	b.NamespaceSelector = value
 	return b
 }

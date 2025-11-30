@@ -648,6 +648,7 @@ func autoConvert_v1_ParamRef_To_admissionregistration_ParamRef(in *admissionregi
 	out.Namespace = in.Namespace
 	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	out.ParameterNotFoundAction = (*admissionregistration.ParameterNotFoundActionType)(unsafe.Pointer(in.ParameterNotFoundAction))
+	out.NamespaceSelector = (*metav1.LabelSelector)(unsafe.Pointer(in.NamespaceSelector))
 	return nil
 }
 
@@ -661,6 +662,7 @@ func autoConvert_admissionregistration_ParamRef_To_v1_ParamRef(in *admissionregi
 	out.Namespace = in.Namespace
 	out.Selector = (*metav1.LabelSelector)(unsafe.Pointer(in.Selector))
 	out.ParameterNotFoundAction = (*admissionregistrationv1.ParameterNotFoundActionType)(unsafe.Pointer(in.ParameterNotFoundAction))
+	out.NamespaceSelector = (*metav1.LabelSelector)(unsafe.Pointer(in.NamespaceSelector))
 	return nil
 }
 
