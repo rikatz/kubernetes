@@ -286,8 +286,11 @@ func CollectParams(
 
 		// Set up cluster-scoped, or namespaced access to the params
 		// "default" if not provided, and paramKind is namespaced
+		// Stick with cluster-scoped in case a namespaceSelector is used
 		paramStore = paramInformer.Lister()
-		if paramScope.Name() == meta.RESTScopeNameNamespace {
+		// In case this is a namespaced resource, and there is no namespace selector this means it should
+		// list only on the desired namespace
+		if paramScope.Name() == meta.RESTScopeNameNamespace && paramRef.NamespaceSelector == nil {
 			paramsNamespace := namespace
 			if len(paramRef.Namespace) > 0 {
 				paramsNamespace = paramRef.Namespace
@@ -312,6 +315,11 @@ func CollectParams(
 		}
 	}
 
+	// selectedNS will be used later to filter params by namespaces when namespaceSelector
+	// is set
+	// Making a map because querying a map is faster than going through the whole array.
+	selectedNS := make(map[string]struct{})
+
 	// Find params to use with policy
 	switch {
 	case paramKind == nil:
@@ -322,14 +330,18 @@ func CollectParams(
 		// Policy ParamKind is set, but binding does not use it.
 		// Validate with nil params
 		return []runtime.Object{nil}, nil
-	case len(paramRef.Namespace) > 0 && paramScope.Name() == meta.RESTScopeRoot.Name():
+	case (len(paramRef.Namespace) > 0 || paramRef.NamespaceSelector != nil) && paramScope.Name() == meta.RESTScopeRoot.Name():
 		// Not allowed to set namespace for cluster-scoped param
-		return nil, fmt.Errorf("paramRef.namespace must not be provided for a cluster-scoped `paramKind`")
+		return nil, fmt.Errorf("paramRef.namespace and paramRef.namespaceSelector must not be provided for a cluster-scoped `paramKind`")
 
 	case len(paramRef.Name) > 0:
 		if paramRef.Selector != nil {
 			// This should be validated, but just in case.
 			return nil, fmt.Errorf("paramRef.name and paramRef.selector are mutually exclusive")
+		}
+		if paramRef.NamespaceSelector != nil {
+			// This should be validated, but just in case.
+			return nil, fmt.Errorf("paramRef.name and paramRef.namespaceSelector are mutually exclusive")
 		}
 
 		switch param, err := paramStore.Get(paramRef.Name); {
@@ -352,34 +364,83 @@ func CollectParams(
 			return nil, err
 		}
 	case paramRef.Selector != nil:
-		// Select everything by default if empty name and selector
-		selector, err := metav1.LabelSelectorAsSelector(paramRef.Selector)
-		if err != nil {
-			// Cannot parse label selector: configuration error
-			return nil, err
+		if paramRef.NamespaceSelector != nil {
+			nsSelector, err := metav1.LabelSelectorAsSelector(paramRef.NamespaceSelector)
+			if err != nil {
+				// Cannot parse namespace label selector: configuration error
+				return nil, err
+			}
+			nsList, err := namespaceLister.List(nsSelector)
+			if err != nil {
+				// There was a bad internal error
+				utilruntime.HandleError(err)
+				return nil, err
+			}
 
+			for i := range nsList {
+				selectedNS[nsList[i].Name] = struct{}{}
+			}
 		}
 
-		paramList, err := paramStore.List(selector)
-		if err != nil {
-			// There was a bad internal error
-			utilruntime.HandleError(err)
-			return nil, err
+		// Given that in this case we have a selector, and our paramStore lister is
+		// either cluster scoped (namespaceSelector != nil) or namespace bound, (namespaceSelector == nil)
+		// in case there is no selected namespace, we can avoid an expensive operation
+		// of listing all the resources by simply skipping this list.
+		// Otherwise, we do expect that the params will contain all of the resources from
+		// the cluster, but then we can filter it out before returning
+		if paramRef.NamespaceSelector == nil || len(selectedNS) > 0 {
+			// Select everything by default if empty name and selector
+			selector, err := metav1.LabelSelectorAsSelector(paramRef.Selector)
+			if err != nil {
+				// Cannot parse label selector: configuration error
+				return nil, err
+			}
+
+			paramList, err := paramStore.List(selector)
+			if err != nil {
+				// There was a bad internal error
+				utilruntime.HandleError(err)
+				return nil, err
+			}
+
+			params = paramList
 		}
 
-		// Successfully grabbed params
-		params = paramList
 	default:
 		// Should be unreachable due to validation
 		return nil, fmt.Errorf("one of name or selector must be provided")
 	}
 
 	// Apply fail action for params not found case
+	// Because the len of params can be 0 in case namespaceSelector != nil && len(selectedNS) == 0
+	// we can early exit here
 	if len(params) == 0 && paramRef.ParameterNotFoundAction != nil && *paramRef.ParameterNotFoundAction == v1.DenyAction {
 		return nil, errors.New("no params found for policy binding with `Deny` parameterNotFoundAction")
 	}
 
-	return params, nil
+	// If we are not expecting to filter per namespace, early return
+	if len(selectedNS) == 0 {
+		return params, nil
+	}
+
+	var filteredParams []runtime.Object
+	for i := range params {
+		metadata, err := meta.Accessor(params[i])
+		if err != nil || metadata.GetNamespace() == "" {
+			// a namespaced object not containing a namespace is an internal error
+			utilruntime.HandleError(err)
+			return nil, err
+		}
+		if _, ok := selectedNS[metadata.GetNamespace()]; ok {
+			filteredParams = append(filteredParams, params[i])
+		}
+	}
+
+	// The same validation of ParamNotFoundAction applies here
+	if len(filteredParams) == 0 && paramRef.ParameterNotFoundAction != nil && *paramRef.ParameterNotFoundAction == v1.DenyAction {
+		return nil, errors.New("no params found for policy binding with `Deny` parameterNotFoundAction")
+	}
+	return filteredParams, nil
 }
 
 var _ webhookgeneric.VersionedAttributeAccessor = &versionedAttributeAccessor{}
